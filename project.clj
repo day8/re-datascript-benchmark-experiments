@@ -11,8 +11,9 @@
                  [bidi "2.1.6"]
                  [kibu/pushy "0.3.8"]]
 
-  :plugins [[lein-shadow "0.3.1"]
-            [lein-shell "0.5.0"]]
+  :plugins [[lein-shadow  "0.3.1"]
+            [lein-shell   "0.5.0"]
+            [lein-ancient "0.6.15"]]
 
   :min-lein-version "2.9.0"
 
