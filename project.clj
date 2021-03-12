@@ -1,15 +1,20 @@
 (defproject re-datascript-bench "0.1.0-SNAPSHOT"
-  :dependencies [[org.clojure/clojure "1.10.3"]
+  :dependencies [[org.clojure/clojure       "1.10.3"]
                  [org.clojure/clojurescript "1.10.773"
                   :exclusions [com.google.javascript/closure-compiler-unshaded
                                org.clojure/google-closure-library
                                org.clojure/google-closure-library-third-party]]
-                 [thheller/shadow-cljs "2.11.23"]
-                 [reagent "1.0.0"]
-                 [re-frame "1.2.0"]
-                 [re-com "2.13.2"]
-                 [bidi "2.1.6"]
-                 [kibu/pushy "0.3.8"]]
+                 [thheller/shadow-cljs      "2.11.23"]
+                 [datascript                "1.0.7"]
+                 [reagent                   "1.0.0"]
+                 [denistakeda/posh          "0.5.8"]
+                 [re-frame                  "1.2.0"]
+                 [re-posh                   "0.3.2"
+                  :exclusions [re-frame/re-frame
+                               denistakeda/posh]]
+                 [re-com                    "2.13.2"]
+                 [bidi                      "2.1.6"]
+                 [kibu/pushy                "0.3.8"]]
 
   :plugins [[lein-shadow  "0.3.1"]
             [lein-shell   "0.5.0"]
@@ -26,13 +31,17 @@
 
                 :builds {:app {:target :browser
                                :output-dir "resources/public/js/compiled"
+                               
                                :asset-path "/js/compiled"
+                               
+                               :compiler-options {:externs ["externs/detect-element-resize-externs.js"]}
+                               
                                :modules {:app {:init-fn re-datascript-bench.core/init
                                                :preloads [devtools.preload]}}
 
                                :devtools {:http-root "resources/public"
-                                          :http-port 8280
-                                          }}}}
+                                          :http-port 8280}}}}
+
 
   :shell {:commands {"karma" {:windows         ["cmd" "/c" "karma"]
                               :default-command "karma"}
@@ -69,8 +78,8 @@
    {:dependencies [[binaryage/devtools "1.0.2"]]
     :source-paths ["dev"]}
 
-   :prod {}
+   :prod {}}
 
-}
+
 
   :prep-tasks [])
