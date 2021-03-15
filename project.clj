@@ -6,6 +6,7 @@
                                org.clojure/google-closure-library-third-party]]
                  [thheller/shadow-cljs      "2.11.23"]
                  [datascript                "1.0.7"]
+                 [datascript-transit        "0.3.0"]
                  [reagent                   "1.0.0"]
                  [denistakeda/posh          "0.5.8"]
                  [re-frame                  "1.2.0"]

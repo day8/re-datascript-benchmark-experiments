@@ -1,6 +1,7 @@
 (ns re-datascript-bench.events
   (:require
    [datascript.core :as d]
+   [datascript.transit :as dt]
    [re-frame.core :as rf :refer [unwrap inject-cofx]]
    [re-posh.core :refer [connect!]]
    [re-datascript-bench.db :as db]))
@@ -12,9 +13,6 @@
     (reset! db/ds-db (d/create-conn db/ds-schema))
     (connect! @db/ds-db)))
 
-;; TODO: try a [:find [(pull ... x50
-;; TODO: serialisation / deserialisation
-
 (rf/reg-event-fx
   ::benchmark-1-tuple
   [unwrap (inject-cofx :ds)]
@@ -24,20 +22,30 @@
                              (range n))
           insert-start (js/performance.now)]
       (d/transact! @db/ds-db tx-data)
-      (let [insert-end      (js/performance.now)
-            insert-delta    (- insert-end insert-start)
-            eid-query-start (js/performance.now)
-            _               (d/q
-                              '[:find ?e
-                                :where
-                                [?e :person/id _]]
-                              @@db/ds-db)
-            eid-query-end   (js/performance.now)
-            eid-query-delta (- eid-query-end eid-query-start)]
+      (let [insert-end          (js/performance.now)
+            insert-delta        (- insert-end insert-start)
+            eid-query-start     (js/performance.now)
+            _                   (d/q
+                                  '[:find ?e
+                                    :where
+                                    [?e :person/id _]]
+                                  @@db/ds-db)
+            eid-query-end       (js/performance.now)
+            eid-query-delta     (- eid-query-end eid-query-start)
+            write-transit-start (js/performance.now)
+            transit             (dt/write-transit-str @@db/ds-db)
+            write-transit-end   (js/performance.now)
+            write-transit-delta (- write-transit-end write-transit-start)
+            read-transit-start  (js/performance.now)
+            _                   (dt/read-transit-str transit)
+            read-transit-end    (js/performance.now)
+            read-transit-delta  (- read-transit-end read-transit-start)]
         (merge
           {:db (-> db
                    (assoc-in [:benchmark :insert n :ms-1] insert-delta)
-                   (assoc-in [:benchmark :query n :eid-1] eid-query-delta))}
+                   (assoc-in [:benchmark :query n :eid-1] eid-query-delta)
+                   (assoc-in [:benchmark :write-transit n :ms-1] write-transit-delta)
+                   (assoc-in [:benchmark :read-transit n :ms-1] read-transit-delta))}
           (if (< n 100000)
             {:connect!       {}
              :dispatch-later {:ms       64
@@ -56,20 +64,40 @@
                         (range n))
           start   (js/performance.now)]
       (d/transact! @db/ds-db tx-data)
-      (let [end   (js/performance.now)
-            delta (- end start)
-            eid-query-start (js/performance.now)
-            _               (d/q
-                              '[:find ?e
-                                :where
-                                [?e :person/id _]]
-                              @@db/ds-db)
-            eid-query-end   (js/performance.now)
-            eid-query-delta (- eid-query-end eid-query-start)]
+      (let [end                 (js/performance.now)
+            delta               (- end start)
+            eid-query-start     (js/performance.now)
+            _                   (d/q
+                                  '[:find ?e
+                                    :where
+                                    [?e :person/id _]]
+                                  @@db/ds-db)
+            eid-query-end       (js/performance.now)
+            eid-query-delta     (- eid-query-end eid-query-start)
+            pull-query-start    (js/performance.now)
+            res                 (d/q
+                                  '[:find (pull ?e [*])
+                                    :where [?e :person/name "Joe"]]
+                                  @@db/ds-db)
+            pull-query-end      (js/performance.now)
+            pull-query-delta    (- pull-query-end pull-query-start)
+            write-transit-start (js/performance.now)
+            transit             (dt/write-transit-str @@db/ds-db)
+            write-transit-end   (js/performance.now)
+            write-transit-delta (- write-transit-end write-transit-start)
+            read-transit-start  (js/performance.now)
+            _                   (dt/read-transit-str transit)
+            read-transit-end    (js/performance.now)
+            read-transit-delta  (- read-transit-end read-transit-start)
+            ]
+        (js/console.info "'[:find (pull ?e [*])\n :where [?e :person/name \"Joe\"]] found" (count res))
         (merge
           {:db (-> db
                    (assoc-in [:benchmark :insert n :ms-2] delta)
-                   (assoc-in [:benchmark :query n :eid-2] eid-query-delta))}
+                   (assoc-in [:benchmark :query n :eid-2] eid-query-delta)
+                   (assoc-in [:benchmark :query n :pull-query] pull-query-delta)
+                   (assoc-in [:benchmark :write-transit n :ms-2] write-transit-delta)
+                   (assoc-in [:benchmark :read-transit n :ms-2] read-transit-delta))}
           (if (< n 100000)
             {:connect!       {}
              :dispatch-later {:ms       64
@@ -89,33 +117,42 @@
                         (range n))
           start   (js/performance.now)]
       (d/transact! @db/ds-db tx-data)
-      (let [end   (js/performance.now)
-            delta (- end start)
-            eid-query-start (js/performance.now)
-            _               (d/q
-                              '[:find ?e
-                                :where
-                                [?e :person/id _]]
-                              @@db/ds-db)
-            eid-query-end   (js/performance.now)
-            eid-query-delta (- eid-query-end eid-query-start)
+      (let [end                  (js/performance.now)
+            delta                (- end start)
+            eid-query-start      (js/performance.now)
+            _                    (d/q
+                                   '[:find ?e
+                                     :where
+                                     [?e :person/id _]]
+                                   @@db/ds-db)
+            eid-query-end        (js/performance.now)
+            eid-query-delta      (- eid-query-end eid-query-start)
             same-age-query-start (js/performance.now)
-            res                    (d/q
-                                     '[:find [?other ...]
-                                       :in $ ?eid
-                                       :where
-                                       [?eid :person/id _]
-                                       [?eid :person/age ?age]
-                                       [?other :person/age ?age]]
-                                     @@db/ds-db 1)
-            same-age-query-end (js/performance.now)
-            same-age-query-delta (- same-age-query-end same-age-query-start)]
-        (js/console.log res)
+            res                  (d/q
+                                   '[:find [?other ...]
+                                     :in $ ?eid
+                                     :where
+                                     [?eid :person/id _]
+                                     [?eid :person/age ?age]
+                                     [?other :person/age ?age]]
+                                   @@db/ds-db 1)
+            same-age-query-end   (js/performance.now)
+            same-age-query-delta (- same-age-query-end same-age-query-start)
+            write-transit-start  (js/performance.now)
+            transit              (dt/write-transit-str @@db/ds-db)
+            write-transit-end    (js/performance.now)
+            write-transit-delta  (- write-transit-end write-transit-start)
+            read-transit-start   (js/performance.now)
+            _                    (dt/read-transit-str transit)
+            read-transit-end     (js/performance.now)
+            read-transit-delta   (- read-transit-end read-transit-start)]
         (merge
           {:db (-> db
                    (assoc-in [:benchmark :insert n :ms-3] delta)
                    (assoc-in [:benchmark :query n :eid-3] eid-query-delta)
-                   (assoc-in [:benchmark :query n :same-age] same-age-query-delta))}
+                   (assoc-in [:benchmark :query n :same-age] same-age-query-delta)
+                   (assoc-in [:benchmark :write-transit n :ms-3] write-transit-delta)
+                   (assoc-in [:benchmark :read-transit n :ms-3] read-transit-delta))}
           (if (< n 100000)
             {:connect!       {}
              :dispatch-later {:ms       64
