@@ -1,59 +1,57 @@
 # re-datascript-bench
 
-A [re-frame](https://github.com/day8/re-frame) application designed to ... well, that part is up to
-you.
+A [re-frame](https://github.com/day8/re-frame) application that does basic measurements of
+[DataScript](https://github.com/tonsky/datascript) performance.
+
+Re-runs all measurements with both:
+- number of entities `100`, `1000`, `10,000` and `100,000`
+- entities with `1`, `2` and `3` attributes
+
+Includes the following measurements:
+- insert times (`d/transact!`)
+- datalog query times (`d/q`)
+- pull query times (`q/pull`)
+- transit serialisation of entire db ([datascript-transit](https://github.com/tonsky/datascript-transit))
+- transit deserialisation of entire db (([datascript-transit](https://github.com/tonsky/datascript-transit)))
+
+## Observations
+
+In Google Chrome on an AMD Ryzen 5000-series desktop:
+
+- insert times range from 16ms for 100 single attribute entities to 7.2s for 100K triple attribute entities
+- query times on the same range from 0.3ms to 145ms
+- transit serialisation ranges from 0.7ms to 560ms
+- transit deserialisation ranges from 0.8ms to 770ms
+
+So DataScript itself is not terrible, but the 
+[posh query analyzer and cache layer on top of DataScript is known to have pathological performance cases](https://github.com/athensresearch/athens/pull/665#issuecomment-790088361).
+
+## Useful DataScript Resources
+
+- https://tonsky.me/blog/datascript-internals/
+- https://tonsky.me/blog/datascript-resources/
+- https://tonsky.me/blog/datascript-chat/
+- https://tonsky.me/blog/acha-acha/
+- https://github.com/tonsky/datascript
+- https://github.com/denistakeda/re-posh (Do not use!)
+- https://github.com/denistakeda/posh (Do not use!)
+- https://github.com/mpdairy/posh-todo
+- https://github.com/kristianmandrup/datascript-tutorial
+- http://web.archive.org/web/20190404202047/http://udayv.com/clojurescript/clojure/2016/04/28/datascript101-chapter1-initializing-inserting-and-querying-records/
+- http://web.archive.org/web/20190405010102/https://udayv.com/clojurescript/clojure/2016/05/06/datascript101-chapter2-uniqueness-and-indexing/
+- http://web.archive.org/web/20190404223433/http://udayv.com/clojurescript/clojure/2016/06/15/datascript101-chapter3-fetching-data/
+- https://www.slideshare.net/fractallambda/datascript-and-reagent
+- https://docs.datomic.com/on-prem/query/query.html
+- https://github.com/thegeez/clj-crud
+
+## Alternatives
+
+- https://github.com/threatgrid/asami/wiki
+- https://github.com/lilactown/autonormal
+- https://github.com/noprompt/meander/blob/epsilon/examples/datascript.cljc
+- https://github.com/simongray/clojure-graph-resources
 
 ## Getting Started
-
-### Project Overview
-
-* Architecture:
-[Single Page Application (SPA)](https://en.wikipedia.org/wiki/Single-page_application)
-* Languages
-  - Front end ([re-frame](https://github.com/day8/re-frame)): [ClojureScript](https://clojurescript.org/) (CLJS)
-* Dependencies
-  - UI framework: [re-frame](https://github.com/day8/re-frame)
-  ([docs](https://github.com/day8/re-frame/blob/master/docs/README.md),
-  [FAQs](https://github.com/day8/re-frame/blob/master/docs/FAQs/README.md)) ->
-  [Reagent](https://github.com/reagent-project/reagent) ->
-  [React](https://github.com/facebook/react)
-  - Client-side routing: [bidi](https://github.com/juxt/bidi) and [pushy](https://github.com/kibu-australia/pushy)
-  - UI components: [re-com](https://github.com/day8/re-com)
-* Build tools
-  - Project task & dependency management: [Leiningen](https://github.com/technomancy/leiningen)
-  - CLJS compilation, REPL, & hot reload: [`shadow-cljs`](https://github.com/thheller/shadow-cljs)
-* Development tools
-  - Debugging: [CLJS DevTools](https://github.com/binaryage/cljs-devtools)
-
-#### Directory structure
-
-* [`/`](/../../): project config files
-* [`dev/`](dev/): source files compiled only with the [dev](#running-the-app) profile
-  - [`cljs/user.cljs`](dev/cljs/user.cljs): symbols for use during development in the
-[ClojureScript REPL](#connecting-to-the-browser-repl-from-a-terminal)
-* [`resources/public/`](resources/public/): SPA root directory;
-[dev](#running-the-app) / [prod](#production) profile depends on the most recent build
-  - [`vendor/`](resources/public/vendor/): UI component CSS, fonts, and images
-  ([re-com](https://github.com/day8/re-com))
-  - [`index.html`](resources/public/index.html): SPA home page
-    - Dynamic SPA content rendered in the following `div`:
-        ```html
-        <div id="app"></div>
-        ```
-    - Customizable; add headers, footers, links to other scripts and styles, etc.
-  - Generated directories and files
-    - Created on build with either the [dev](#running-the-app) or [prod](#production) profile
-    - Deleted on `lein clean` (run by all `lein` aliases before building)
-    - `js/compiled/`: compiled CLJS (`shadow-cljs`)
-      - Not tracked in source control; see [`.gitignore`](.gitignore)
-* [`src/cljs/re_datascript_bench/`](src/cljs/re_datascript_bench/): SPA source files (ClojureScript,
-[re-frame](https://github.com/Day8/re-frame))
-  - [`core.cljs`](src/cljs/re_datascript_bench/core.cljs): contains the SPA entry point, `init`
-
-### Editor/IDE
-
-Use your preferred editor or IDE that supports Clojure/ClojureScript development. See
-[Clojure tools](https://clojure.org/community/resources#_clojure_tools) for some popular options.
 
 ### Environment Setup
 
@@ -67,38 +65,7 @@ dependency management)
     ```sh
     lein deps
     ```
-
-### Browser Setup
-
-Browser caching should be disabled when developer tools are open to prevent interference with
-[`shadow-cljs`](https://github.com/thheller/shadow-cljs) hot reloading.
-
-Custom formatters must be enabled in the browser before
-[CLJS DevTools](https://github.com/binaryage/cljs-devtools) can display ClojureScript data in the
-console in a more readable way.
-
-#### Chrome/Chromium
-
-1. Open [DevTools](https://developers.google.com/web/tools/chrome-devtools/) (Linux/Windows: `F12`
-or `Ctrl-Shift-I`; macOS: `⌘-Option-I`)
-2. Open DevTools Settings (Linux/Windows: `?` or `F1`; macOS: `?` or `Fn+F1`)
-3. Select `Preferences` in the navigation menu on the left, if it is not already selected
-4. Under the `Network` heading, enable the `Disable cache (while DevTools is open)` option
-5. Under the `Console` heading, enable the `Enable custom formatters` option
-
-#### Firefox
-
-1. Open [Developer Tools](https://developer.mozilla.org/en-US/docs/Tools) (Linux/Windows: `F12` or
-`Ctrl-Shift-I`; macOS: `⌘-Option-I`)
-2. Open [Developer Tools Settings](https://developer.mozilla.org/en-US/docs/Tools/Settings)
-(Linux/macOS/Windows: `F1`)
-3. Under the `Advanced settings` heading, enable the `Disable HTTP Cache (when toolbox is open)`
-option
-
-Unfortunately, Firefox does not yet support custom formatters in their devtools. For updates, follow
-the enhancement request in their bug tracker:
-[1262914 - Add support for Custom Formatters in devtools](https://bugzilla.mozilla.org/show_bug.cgi?id=1262914).
-
+   
 ## Development
 
 ### Running the App
@@ -171,38 +138,27 @@ Run a shadow-cljs action on this project's build id (without the colon, just `ap
 ```sh
 lein run -m shadow.cljs.devtools.cli <action> app
 ```
-### Debug Logging
 
-The `debug?` variable in [`config.cljs`](src/cljs/re_datascript_bench/config.cljs) defaults to `true` in
-[`dev`](#running-the-app) builds, and `false` in [`prod`](#production) builds.
+## License
 
-Use `debug?` for logging or other tasks that should run only on `dev` builds:
+The MIT License (MIT)
 
-```clj
-(ns re-datascript-bench.example
-  (:require [re-datascript-bench.config :as config])
+Copyright &copy; 2021 Isaac Johnston
 
-(when config/debug?
-  (println "This message will appear in the browser console only on dev builds."))
-```
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-## Production
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-Build the app with the `prod` profile:
-
-```sh
-lein release
-```
-
-Please be patient; it may take over 15 seconds to see any output, and over 30 seconds to complete.
-
-The `resources/public/js/compiled` directory is created, containing the compiled `app.js` and
-`manifest.edn` files.
-
-The [`resources/public`](resources/public/) directory contains the complete, production web front
-end of your app.
-
-Always inspect the `resources/public/js/compiled` directory prior to deploying the app. Running any
-`lein` alias in this project after `lein watch` will, at the very least, run `lein clean`, which
-deletes this generated directory. Further, running `lein watch` will generate many, much larger
-development versions of the files in this directory.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
